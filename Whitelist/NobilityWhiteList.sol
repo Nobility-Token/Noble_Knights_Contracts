@@ -47,10 +47,10 @@ contract NobilityWhiteList is Context, ERC165, IERC721, IERC721Metadata {
     uint256 public constant maxWhiteListSpots = 3;
 
     // maximum supply which can be minted
-    uint256 public constant maxSupply = 2222;
+    uint256 public constant maxSupply = 2150;
 
     // price of each NFT
-    uint256 public constant price = 15 * 10**16;
+    uint256 public price = 25 * 10**15;
 
     // nfts baseURL
     string private baseURI = "https://nftapi.nobilitytoken.com/whitepass/";
@@ -113,6 +113,10 @@ contract NobilityWhiteList is Context, ERC165, IERC721, IERC721Metadata {
         emit UnPaused();
     }
 
+    function setPrice(uint256 p) external onlyOwner {
+        price = p;
+    }
+
     function disableMinting() external onlyOwner {
         mintingDisabled = true;
         emit MintingDisabled();
@@ -127,11 +131,11 @@ contract NobilityWhiteList is Context, ERC165, IERC721, IERC721Metadata {
         return _totalSupply;
     }
 
-    function setBaseURI(string memory uri) public onlyOwner {
+    function setBaseURI(string calldata uri) external onlyOwner {
         baseURI = uri;
     }
 
-    function _baseURI() internal view virtual returns (string memory) {
+    function _baseURI() internal view returns (string memory) {
         return baseURI;
     }
 
