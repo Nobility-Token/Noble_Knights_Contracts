@@ -177,6 +177,40 @@ contract NobilityKnight is Context, ERC165, IERC721, IERC721Metadata {
 
     // external functions
 
+    function fetchIDSForOwner(bool _whitelistOne, address holder, uint256 whitelistTotalSupply) external view returns (uint256[] memory) {
+        uint256 count = 0;
+    
+        for (uint i = 0; i < whitelistTotalSupply; i++) {
+            if (IERC721(_whitelistOne ? whitelistOne : whitelistTwo).ownerOf(i) == holder) {
+                if (_whitelistOne && !whitelistOneHasMinted[i]) {
+                    count++;
+                } else if (!_whitelistOne && !whitelistTwoHasMinted[i]) {
+                    count++;
+                }                
+            }
+        }
+
+        uint256[] memory ids = new uint256[](count);
+        uint256 j;
+
+        if (count == 0) return ids;
+
+        for (uint i = 0; i < whitelistTotalSupply; i++) {
+            if (IERC721(_whitelistOne ? whitelistOne : whitelistTwo).ownerOf(i) == holder) {
+                if (_whitelistOne && !whitelistOneHasMinted[i]) {
+                    ids[j] = i;
+                    j++;
+                } else if (!_whitelistOne && !whitelistTwoHasMinted[i]) {
+                    ids[j] = i;
+                    j++;
+                }
+                
+            }
+        }
+
+        return ids;
+    }
+
     function burn(uint256 tokenID) external {
         require(_isApprovedOrOwner(_msgSender(), tokenID), "caller not owner nor approved");
         _burn(tokenID);
@@ -343,26 +377,44 @@ contract NobilityKnight is Context, ERC165, IERC721, IERC721Metadata {
     }
 
     function fetchIDSLookingToDual() external view returns (uint256[] memory) {
-        uint256[] memory ids = new uint256[](_totalSupply);
         uint256 count = 0;
         for (uint i = 0; i < _totalSupply; i++) {
             if (lookingForDual[i]) {
-                ids[count] = i;
                 count++;
             }
         }
+
+        uint256[] memory ids = new uint256[](count);
+        uint256 j;
+
+        for (uint i = 0; i < _totalSupply; i++) {
+            if (lookingForDual[i]) {
+                ids[j] = i;
+                j++;
+            }
+        }
+
         return ids;
     }
 
     function fetchIDSLookingToDualInIDRange(uint256 lowerBound, uint256 upperBound) external view returns (uint256[] memory) {
-        uint256[] memory ids;
         uint256 count = 0;
         for (uint i = lowerBound; i < upperBound; i++) {
             if (lookingForDual[i]) {
-                ids[count] = i;
                 count++;
             }
         }
+
+        uint256[] memory ids = new uint256[](count);
+        uint256 j;
+
+        for (uint i = lowerBound; i < upperBound; i++) {
+            if (lookingForDual[i]) {
+                ids[j] = i;
+                j++;
+            }
+        }
+
         return ids;
     }
 
