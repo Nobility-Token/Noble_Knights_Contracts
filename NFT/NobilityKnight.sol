@@ -8,9 +8,11 @@ import "./Address.sol";
 import "./Context.sol";
 import "./ERC165.sol";
 import "./IRNG.sol";
+import "./Strings.sol";
 
 contract NobilityKnight is Context, ERC165, IERC721, IERC721Metadata {
     using Address for address;
+    using Strings for uint256;
 
     // Token name
     string private _name;
@@ -60,6 +62,9 @@ contract NobilityKnight is Context, ERC165, IERC721, IERC721Metadata {
     address private constant whitelistTwo = 0x4F86eDcACD3B67Ab8786B030A3eEe4275c7Ca90d;
     uint256 private constant whitelistOneCost = 3194 * 10**14;
 
+    // use wallet
+    address public useWallet = 0xcDe5525CF7971cc28759939481FEcc9E45941ff6;
+
     // base cost to mint NFT
     uint256 public cost = 4444 * 10**14;
 
@@ -99,19 +104,22 @@ contract NobilityKnight is Context, ERC165, IERC721, IERC721Metadata {
 
     // events
     event Battle(uint256 attackerID, uint256 defenderID, uint256 winningID);
+    event SetUseWallet(address useWallet);
 
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-    constructor(uint256 supplyWhiteList) {
+    constructor() {
         // token stats
         _name = 'Noble Knights';
         _symbol = 'NBLK';
 
         // split up mints between whitelist + non whitelisted
         remainingStaffMints = 30;
-        remainingWhitelist = supplyWhiteList;
+
+        // Remaining whitelist, no more will be minted that effect NobleKnights
+        remainingWhitelist = 242;
 
         // time of launch
         launchTime = block.number;
@@ -132,12 +140,29 @@ contract NobilityKnight is Context, ERC165, IERC721, IERC721Metadata {
         RNG = newRNG;
     }
 
+    function setStaffMints(uint256 newStaffMints) external onlyOperator {
+        remainingStaffMints = newStaffMints;
+    }
+
+    function setWhiteListSpots(uint256 newWhiteListSpots) external onlyOperator {
+        remainingWhitelist = newWhiteListSpots;
+    }
+
     function changeCost(uint256 newCost) external onlyOperator {
         cost = newCost;
     }
 
     function startSale() external onlyOperator {
         saleStarted = true;
+    }
+
+    function stopSale() external onlyOperator {
+        saleStarted = false;
+    }
+
+    function changeUseWallet(address newUseWallet) external onlyOperator {
+        useWallet = newUseWallet;
+        emit SetUseWallet(newUseWallet);
     }
 
     function enableDualing() external onlyOperator {
@@ -311,6 +336,9 @@ contract NobilityKnight is Context, ERC165, IERC721, IERC721Metadata {
         for (uint i = 0; i < nMints; i++) {
             _safeMint(msg.sender, _totalSupply);
         }
+
+        (bool s,) = payable(useWallet).call{value: address(this).balance}("");
+        require(s, 'Failure On ETH Payment');
     }
 
     receive() external payable {}
@@ -485,8 +513,10 @@ contract NobilityKnight is Context, ERC165, IERC721, IERC721Metadata {
         require(_exists(tokenId), "nonexistent token");
 
         string memory _base = _baseURI();
-        return string(abi.encodePacked(_base, idToLevel[tokenId]));
+        return string(abi.encodePacked(_base, tokenId.toString()));
     }
+
+    
 
     /**
      * @dev See {IERC721-approve}.
